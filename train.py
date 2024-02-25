@@ -3,15 +3,22 @@ from monai.networks.layers import Norm
 from monai.losses import DiceLoss, DiceCELoss
 
 import torch
-from preporcess import prepare
+from preprocess import prepare
 from utilities import train
 
 
-data_dir = 'D:/Youtube/Organ and Tumor Segmentation/datasets/Task03_Liver/Data_Train_Test'
-model_dir = 'D:/Youtube/Organ and Tumor Segmentation/results/results' 
+data_dir = '/Users/tylerklimas/Desktop/LiverSegmentation/LiverSegmentationData'
+# model_dir = 'D:/Youtube/Organ and Tumor Segmentation/results/results' 
 data_in = prepare(data_dir, cache=True)
 
-device = torch.device("cuda:0")
+device = None
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")  # Use GPU
+    print("CUDA is available. Using GPU.")
+else:
+    device = torch.device("cpu")  # Use CPU
+    print("CUDA is not available. Using CPU.")
+
 model = UNet(
     dimensions=3,
     in_channels=1,
@@ -28,4 +35,4 @@ loss_function = DiceLoss(to_onehot_y=True, sigmoid=True, squared_pred=True)
 optimizer = torch.optim.Adam(model.parameters(), 1e-5, weight_decay=1e-5, amsgrad=True)
 
 if __name__ == '__main__':
-    train(model, data_in, loss_function, optimizer, 600, model_dir)
+    train(model, data_in, loss_function, optimizer, 600)

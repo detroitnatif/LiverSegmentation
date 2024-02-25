@@ -28,7 +28,7 @@ def calculate_weights(val1, val2):
     weights = weights/summ
     return torch.tensor(weights, dtype=torch.float32)
 
-def train(model, data_in, loss, optim, max_epochs, model_dir, test_interval=1 , device=torch.device("cuda:0")):
+def train(model, data_in, loss, optim, max_epochs, test_interval=1 , device=torch.device("cuda:0")):
     best_metric = -1
     best_metric_epoch = -1
     save_loss_train = []
@@ -75,13 +75,13 @@ def train(model, data_in, loss, optim, max_epochs, model_dir, test_interval=1 , 
         train_epoch_loss /= train_step
         print(f'Epoch_loss: {train_epoch_loss:.4f}')
         save_loss_train.append(train_epoch_loss)
-        np.save(os.path.join(model_dir, 'loss_train.npy'), save_loss_train)
+        # np.save(os.path.join(model_dir, 'loss_train.npy'), save_loss_train)
         
         epoch_metric_train /= train_step
         print(f'Epoch_metric: {epoch_metric_train:.4f}')
 
         save_metric_train.append(epoch_metric_train)
-        np.save(os.path.join(model_dir, 'metric_train.npy'), save_metric_train)
+        # np.save(os.path.join(model_dir, 'metric_train.npy'), save_metric_train)
 
         if (epoch + 1) % test_interval == 0:
 
@@ -112,18 +112,18 @@ def train(model, data_in, loss, optim, max_epochs, model_dir, test_interval=1 , 
                 test_epoch_loss /= test_step
                 print(f'test_loss_epoch: {test_epoch_loss:.4f}')
                 save_loss_test.append(test_epoch_loss)
-                np.save(os.path.join(model_dir, 'loss_test.npy'), save_loss_test)
+                # np.save(os.path.join(model_dir, 'loss_test.npy'), save_loss_test)
 
                 epoch_metric_test /= test_step
                 print(f'test_dice_epoch: {epoch_metric_test:.4f}')
                 save_metric_test.append(epoch_metric_test)
-                np.save(os.path.join(model_dir, 'metric_test.npy'), save_metric_test)
+                # np.save(os.path.join(model_dir, 'metric_test.npy'), save_metric_test)
 
-                if epoch_metric_test > best_metric:
-                    best_metric = epoch_metric_test
-                    best_metric_epoch = epoch + 1
-                    torch.save(model.state_dict(), os.path.join(
-                        model_dir, "best_metric_model.pth"))
+                # if epoch_metric_test > best_metric:
+                #     best_metric = epoch_metric_test
+                #     best_metric_epoch = epoch + 1
+                #     torch.save(model.state_dict(), os.path.join(
+                #         model_dir, "best_metric_model.pth"))
                 
                 print(
                     f"current epoch: {epoch + 1} current mean dice: {test_metric:.4f}"
