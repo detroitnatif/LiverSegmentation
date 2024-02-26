@@ -7,7 +7,7 @@ import numpy as np
 # import nibabel as nib
 from monai.transforms import(
     Compose,
-    AddChanneld,
+    # AddChannel,
     LoadImaged,
     Resized,
     ToTensord,
@@ -95,19 +95,29 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
 
     set_determinism(seed=0)
 
-    path_train_volumes = sorted(glob(os.path.join(in_dir, "TrainVolumes", "*.nii.gz")))
-    path_train_segmentation = sorted(glob(os.path.join(in_dir, "TrainSegmentation", "*.nii.gz")))
+    def sort_by_liver_number(file_path):
+        # Extract the number from the file name
+        file_name = os.path.basename(file_path)
+        liver_number = int(file_name.split('_')[1].split('.')[0])
+        return liver_number
 
-    path_test_volumes = sorted(glob(os.path.join(in_dir, "TestVolumes", "*.nii.gz")))
-    path_test_segmentation = sorted(glob(os.path.join(in_dir, "TestSegmentation", "*.nii.gz")))
+    folders = glob(in_dir +'/*')
 
-    train_files = [{"vol": image_name, "seg": label_name} for image_name, label_name in zip(path_train_volumes, path_train_segmentation)]
-    test_files = [{"vol": image_name, "seg": label_name} for image_name, label_name in zip(path_test_volumes, path_test_segmentation)]
+    training_images = sorted(glob(in_dir + '/ImagesTr' + "/*" ))
+    training_labels = sorted(glob(in_dir + '/LabelsTr' + "/*" ))
+
+
+    training_images = sorted(training_images, key=sort_by_liver_number)[:99]
+    training_labels = sorted(training_labels, key=sort_by_liver_number)[:99]
+
+    testing_images = sorted(training_images, key=sort_by_liver_number)[100:]
+    testing_labels = sorted(training_labels, key=sort_by_liver_number)[100:]
+
 
     train_transforms = Compose(
         [
             LoadImaged(keys=["vol", "seg"]),
-            AddChanneld(keys=["vol", "seg"]),
+            # AddChanneld(keys=["vol", "seg"]),
             Spacingd(keys=["vol", "seg"], pixdim=pixdim, mode=("bilinear", "nearest")),
             Orientationd(keys=["vol", "seg"], axcodes="RAS"),
             ScaleIntensityRanged(keys=["vol"], a_min=a_min, a_max=a_max, b_min=0.0, b_max=1.0, clip=True), 
@@ -121,11 +131,11 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
     test_transforms = Compose(
         [
             LoadImaged(keys=["vol", "seg"]),
-            AddChanneld(keys=["vol", "seg"]),
+            # AddChanneld(keys=["vol", "seg"]),
             Spacingd(keys=["vol", "seg"], pixdim=pixdim, mode=("bilinear", "nearest")),
             Orientationd(keys=["vol", "seg"], axcodes="RAS"),
             ScaleIntensityRanged(keys=["vol"], a_min=a_min, a_max=a_max,b_min=0.0, b_max=1.0, clip=True), 
-            CropForegroundd(keys=['vol', 'seg'], source_key='vol'),
+            CropForegroundd(keys=['vol', 'seg'], source_key='vol', allow_smaller=False),
             Resized(keys=["vol", "seg"], spatial_size=spatial_size),   
             ToTensord(keys=["vol", "seg"]),
 
@@ -150,3 +160,6 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
         test_loader = DataLoader(test_ds, batch_size=1)
 
         return train_loader, test_loader
+
+
+prepare(in_dir='/Users/tylerklimas/Desktop/LiverSegmentation/LiverSegmentationData')
