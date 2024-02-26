@@ -7,9 +7,9 @@ from preprocess import prepare
 from utilities import train
 
 
-data_dir = '/Users/tylerklimas/Desktop/LiverSegmentation/LiverSegmentationData'
+data_dir = '/Users/tylerklimas/Desktop/LiverSegmentation/task03_liver'
 # model_dir = 'D:/Youtube/Organ and Tumor Segmentation/results/results' 
-data_in = prepare(data_dir, cache=True)
+data_in = prepare(data_dir, cache=False)
 
 device = None
 if torch.cuda.is_available():
@@ -20,7 +20,7 @@ else:
     print("CUDA is not available. Using CPU.")
 
 model = UNet(
-    dimensions=3,
+    spatial_dims=3,
     in_channels=1,
     out_channels=2,
     channels=(16, 32, 64, 128, 256), 
@@ -35,4 +35,4 @@ loss_function = DiceLoss(to_onehot_y=True, sigmoid=True, squared_pred=True)
 optimizer = torch.optim.Adam(model.parameters(), 1e-5, weight_decay=1e-5, amsgrad=True)
 
 if __name__ == '__main__':
-    train(model, data_in, loss_function, optimizer, 600)
+    train(model, data_in, loss_function, optimizer, 5)
