@@ -11,7 +11,7 @@ data_dir = '/Users/tylerklimas/Desktop/LiverSegmentation/task03_liver'
 # model_dir = 'D:/Youtube/Organ and Tumor Segmentation/results/results' 
 data_in = prepare(data_dir, cache=False)
 
-device = None
+
 if torch.cuda.is_available():
     device = torch.device("cuda:0")  # Use GPU
     print("CUDA is available. Using GPU.")
@@ -31,7 +31,7 @@ model = UNet(
 
 
 #loss_function = DiceCELoss(to_onehot_y=True, sigmoid=True, squared_pred=True, ce_weight=calculate_weights(1792651250,2510860).to(device))
-loss_function = DiceLoss(to_onehot_y=True, sigmoid=True, squared_pred=True)
+loss_function = DiceLoss(to_onehot_y=True, sigmoid=True, squared_pred=True).to(device)
 optimizer = torch.optim.Adam(model.parameters(), 1e-5, weight_decay=1e-5, amsgrad=True)
 
 if __name__ == '__main__':
