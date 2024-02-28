@@ -13,7 +13,8 @@ Using PyTorch and MonAI to perform image segmentation
 </blockquote>
 
 Starting with this pre-labled dataset, comprised of 200 patient CAT scans each containing 128 slices, I seperated the data into training and testing splits. From here I preprocessed the images by combining all 128 slices into a compresssed .nii file, and performed the necessary transformations.  
-[train_transforms = Compose(
+```
+train_transforms = Compose(
     [
         LoadImaged(keys=["vol", "seg"]),
         EnsureChannelFirstd(keys=["vol", "seg"]),
@@ -25,7 +26,7 @@ Starting with this pre-labled dataset, comprised of 200 patient CAT scans each c
         ToTensord(keys=["vol", "seg"])
     ]
 )
-](preprocess.py).
+```
 
  
 
