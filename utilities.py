@@ -6,6 +6,17 @@ import numpy as np
 from monai.losses import DiceLoss
 from tqdm import tqdm
 
+
+def get_device():
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")  # Use GPU
+        print("CUDA is available. Using GPU.")
+    else:
+        device = torch.device("cpu")  # Use CPU
+        print("CUDA is not available. Using CPU.")
+
+    return device
+
 def dice_metric(predicted, target):
     '''
     In this function we take `predicted` and `target` (label) to calculate the dice coeficient then we use it 
@@ -28,7 +39,9 @@ def calculate_weights(val1, val2):
     weights = weights/summ
     return torch.tensor(weights, dtype=torch.float32)
 
-def train(model, data_in, loss, optim, max_epochs, test_interval=1 , device=torch.device("cuda:0")):
+def train(model, data_in, loss, optim, max_epochs=5, test_interval=1 , device=get_device()):
+    print(data_in)
+
     best_metric = -1
     best_metric_epoch = -1
     save_loss_train = []
@@ -36,6 +49,7 @@ def train(model, data_in, loss, optim, max_epochs, test_interval=1 , device=torc
     save_metric_train = []
     save_metric_test = []
     train_loader, test_loader = data_in
+    print(data_in)
 
     for epoch in range(max_epochs):
         print("-" * 10)
@@ -138,23 +152,13 @@ def train(model, data_in, loss, optim, max_epochs, test_interval=1 , device=torc
 
 
 def show_patient(data, SLICE_NUMBER=1, train=True, test=False):
-    """
-    This function is to show one patient from your datasets, so that you can si if the it is okay or you need 
-    to change/delete something.
 
-    `data`: this parameter should take the patients from the data loader, which means you need to can the function
-    prepare first and apply the transforms that you want after that pass it to this function so that you visualize 
-    the patient with the transforms that you want.
-    `SLICE_NUMBER`: this parameter will take the slice number that you want to display/show
-    `train`: this parameter is to say that you want to display a patient from the training data (by default it is true)
-    `test`: this parameter is to say that you want to display a patient from the testing patients.
-    """
 
     check_patient_train, check_patient_test = data
 
     view_train_patient = first(check_patient_train)
     view_test_patient = first(check_patient_test)
-
+    
     
     if train:
         plt.figure("Visualization Train", (12, 6))
