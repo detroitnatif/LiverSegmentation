@@ -7,7 +7,7 @@ import numpy as np
 # import nibabel as nib
 from monai.transforms import(
     Compose,
-    # AddChannel,
+    EnsureChannelFirstd,
     LoadImaged,
     Resized,
     ToTensord,
@@ -20,22 +20,11 @@ from monai.data import DataLoader, Dataset, CacheDataset
 from monai.utils import set_determinism
 
 """
-This file is for preporcessing only, it contains all the functions that you need
-to make your data ready for training.
-
-You need to install the required libraries if you do not already have them.
-
-pip install os, ...
+PREPROCESS
 """
 
 def create_groups(in_dir, out_dir, Number_slices):
-    '''
-    This function is to get the last part of the path so that we can use it to name the folder.
-    `in_dir`: the path to your folders that contain dicom files
-    `out_dir`: the path where you want to put the converted nifti files
-    `Number_slices`: here you put the number of slices that you need for your project and it will 
-    create groups with this number.
-    '''
+
 
     for patient in glob(in_dir + '/*'):
         patient_name = os.path.basename(os.path.normpath(patient))
@@ -55,25 +44,15 @@ def create_groups(in_dir, out_dir, Number_slices):
                 shutil.move(file, output_path)
 
 
-# def dcm2nifti(in_dir, out_dir):
-#     '''
-#     This function will be used to convert dicoms into nifti files after creating the groups with 
-#     the number of slices that you want.
-#     `in_dir`: the path to the folder where you have all the patients (folder of all the groups).
-#     `out_dir`: the path to the output, which means where you want to save the converted nifties.
-#     '''
 
+
+# def dcm2nifti(in_dir, out_dir):
 #     for folder in tqdm(glob(in_dir + '/*')):
 #         patient_name = os.path.basename(os.path.normpath(folder))
 #         dicom2nifti.dicom_series_to_nifti(folder, os.path.join(out_dir, patient_name + '.nii.gz'))
 
 
 # def find_empy(in_dir):
-#     '''
-#     This function will help you to find the empty volumes that you may not need for your training
-#     so instead of opening all the files and search for the empty ones, them use this function to make it quick.
-#     '''
-    
 #     list_patients = []
 #     for patient in glob(os.path.join(in_dir, '*')):
 #         img = nib.load(patient)
@@ -86,12 +65,6 @@ def create_groups(in_dir, out_dir, Number_slices):
 
 
 def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=[128,128,64], cache=False):
-
-    """
-    This function is for preprocessing, it contains only the basic transforms, but you can add more operations that you 
-    find in the Monai documentation.
-    https://monai.io/docs.html
-    """
 
     set_determinism(seed=0)
 
@@ -113,11 +86,15 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
     testing_images = sorted(training_images, key=sort_by_liver_number)[100:]
     testing_labels = sorted(training_labels, key=sort_by_liver_number)[100:]
 
+    train_files = [{"vol": image_name, "seg": label_name} for image_name, label_name in zip(training_images, training_labels)]
+    test_files = [{'vol': image_name, "seg": label_name} for image_name, label_name in zip(testing_images, testing_labels)]
+    
+
 
     train_transforms = Compose(
         [
             LoadImaged(keys=["vol", "seg"]),
-            # AddChanneld(keys=["vol", "seg"]),
+            EnsureChannelFirstd(keys=["vol", "seg"]),
             Spacingd(keys=["vol", "seg"], pixdim=pixdim, mode=("bilinear", "nearest")),
             Orientationd(keys=["vol", "seg"], axcodes="RAS"),
             ScaleIntensityRanged(keys=["vol"], a_min=a_min, a_max=a_max, b_min=0.0, b_max=1.0, clip=True), 
@@ -128,10 +105,11 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
         ]
     )
 
+
     test_transforms = Compose(
         [
             LoadImaged(keys=["vol", "seg"]),
-            # AddChanneld(keys=["vol", "seg"]),
+            EnsureChannelFirstd(keys=["vol", "seg"]),
             Spacingd(keys=["vol", "seg"], pixdim=pixdim, mode=("bilinear", "nearest")),
             Orientationd(keys=["vol", "seg"], axcodes="RAS"),
             ScaleIntensityRanged(keys=["vol"], a_min=a_min, a_max=a_max,b_min=0.0, b_max=1.0, clip=True), 
@@ -142,6 +120,7 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
             
         ]
     )
+    
 
     if cache:
         train_ds = CacheDataset(data=train_files, transform=train_transforms,cache_rate=1.0)
@@ -162,4 +141,6 @@ def prepare(in_dir, pixdim=(1.5, 1.5, 1.0), a_min=-200, a_max=200, spatial_size=
         return train_loader, test_loader
 
 
-prepare(in_dir='/Users/tylerklimas/Desktop/LiverSegmentation/LiverSegmentationData')
+train_loader, test_loader = prepare(in_dir='/Users/tylerklimas/Desktop/LiverSegmentation/Task03_liver')
+
+
